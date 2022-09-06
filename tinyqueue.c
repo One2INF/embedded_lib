@@ -129,7 +129,7 @@ bool QUEUE_Destroy(QUEUE queue)
 
 bool QUEUE_Traverse(QUEUE queue, void(*func)(void*))
 {
-  void *item = queue->head;
+  char *item = queue->head;
   for(size_t size = 0; size < queue->size; ++size)
   {
     func(item);

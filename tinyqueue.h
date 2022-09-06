@@ -12,11 +12,12 @@ typedef struct
   size_t element_size;
 
   size_t size;
-  void *head;
-  void *tail;
+  char *head;
+  char *tail;
 }QUEUE_ST;
 
 typedef QUEUE_ST* QUEUE;
+
 
 bool QUEUE_Empty(QUEUE queue);
 size_t QUEUE_Size(QUEUE queue);
