@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
-
+#include <stdlib.h>
 
 #define QUEUE_CAPACITY    4
 
@@ -24,82 +24,111 @@ void print_queue_info(QUEUE queue)
   printf("\r\n");
 }
 
+bool PushBackTest(QUEUE queue, int test_data_buff[])
+{
+  int idx;
+  for(idx = 0 ; idx < queue->capacity; ++idx)
+  {
+    QUEUE_PushBack(queue, &test_data_buff[idx]);
+  }
+
+  for(idx = 0; idx < queue->capacity; ++idx)
+  {
+    if(*(int*)QUEUE_At(queue, idx) != test_data_buff[idx])
+      return true;
+  }
+
+  for(idx = 0; idx < queue->capacity; ++idx)
+  {
+    if(*(int*)QUEUE_Back(queue) != test_data_buff[queue->capacity - idx - 1])
+      return true;
+
+    if(*(int*)QUEUE_Front(queue) != test_data_buff[0])
+      return true;
+    QUEUE_PopBack(queue);
+  }
+
+  return false;
+}
+
+bool PushFrontTest(QUEUE queue, int test_data_buff[])
+{
+  int idx;
+  for(idx = 0 ; idx < queue->capacity; ++idx)
+  {
+    QUEUE_PushFront(queue, &test_data_buff[idx]);
+  }
+
+  for(idx = 0; idx < queue->capacity; ++idx)
+  {
+    if(*(int*)QUEUE_At(queue, idx) != test_data_buff[queue->capacity - idx - 1])
+      return true;
+  }
+
+  for(idx = 0; idx < queue->capacity; ++idx)
+  {
+    if(*(int*)QUEUE_Front(queue) != test_data_buff[queue->capacity - idx - 1])
+      return true;
+
+    if(*(int*)QUEUE_Back(queue) != test_data_buff[0])
+      return true;
+
+    QUEUE_PopFront(queue);
+  }
+  
+  return false;
+}
+
 int main(int argc, char* argv[])
 {
   printf("------- queue test -------\r\n");
-  int buff[QUEUE_CAPACITY];
+  FILE *fp;
+  char *file;
+
+  if(argc == 1)
+  {
+    file = "./queue_test_data.txt";
+  }
+  else if(argc == 2)
+  {
+    file = argv[1];
+  }
+  else
+  {
+    printf("Usage: %s filename\r\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
+
+  if((fp = fopen(file, "r")) == NULL)
+  {
+    printf("Can't open %s\r\n", file);
+    exit(EXIT_FAILURE);
+  }
+
+  int test_number;
   QUEUE_ST queue;
+  fscanf(fp, "%d %zd", &test_number, &queue.capacity);
+  queue.element_size = sizeof(int);
+  int queue_buff[queue.capacity];
+  QUEUE_Create(&queue, queue_buff, queue.capacity, queue.element_size);
 
-  QUEUE_Create(&queue, buff, QUEUE_CAPACITY, sizeof(int));
-  print_queue_info(&queue);
-
-  int a = 1;
-  QUEUE_PushBack(&queue, &a);
-  a = 2;
-  QUEUE_PushBack(&queue, &a);
-  a = 3;
-  QUEUE_PushBack(&queue, &a);
-  a = 4;
-  QUEUE_PushBack(&queue, &a);
-  a = 5;
-  QUEUE_PushBack(&queue, &a);
-
-  QUEUE_Traverse(&queue, print_node);
-  printf("\r\n");
-  for(int i = 0; i < QUEUE_CAPACITY; ++i)
+  for(int i = 0; i < test_number; ++i)
   {
-    if(i % 2) 
-      QUEUE_PopBack(&queue);
-    else
-      QUEUE_PopFront(&queue);
+    int test_data_buff[queue.capacity];
+    for(int idx = 0; idx < queue.capacity; ++idx)
+      fscanf(fp, "%d", &test_data_buff[idx]);
 
-    printf("size %zd: ", QUEUE_Size(&queue));
     QUEUE_Traverse(&queue, print_node);
-    printf("\r\n");
+
+    if(PushBackTest(&queue, test_data_buff) ||
+       PushFrontTest(&queue, test_data_buff))
+      goto test_failed;
   }
 
-  QUEUE_PopFront(&queue);
-
-  a = 6;
-  QUEUE_PushFront(&queue, &a);
-  a = 7;
-  QUEUE_PushFront(&queue, &a);
-  a = 8;
-  QUEUE_PushFront(&queue, &a);
-  a = 9;
-  QUEUE_PushFront(&queue, &a);
-  a = 0;
-  QUEUE_PushFront(&queue, &a);
-
-  QUEUE_Traverse(&queue, print_node);
-  printf("\r\n");
-  for(int i = 0; i < QUEUE_CAPACITY; ++i)
-  {
-    QUEUE_PopBack(&queue);
-    printf("size %zd: ", QUEUE_Size(&queue));
-    QUEUE_Traverse(&queue, print_node);
-    printf("\r\n");
-  }
-
-  a = 11;
-  QUEUE_PushBack(&queue, &a);
-  a = 12;
-  QUEUE_PushBack(&queue, &a);
-  a = 13;
-  QUEUE_PushBack(&queue, &a);
-  a = 14;
-  QUEUE_PushBack(&queue, &a);
-  a = 15;
-  QUEUE_PushBack(&queue, &a);
-
-  QUEUE_Traverse(&queue, print_node);
-  printf("\r\n");
-
-  for(int i = 0; i < QUEUE_CAPACITY; ++i)
-  {
-    printf("%d ", *(int*)QUEUE_At(&queue, i));
-  }
-  printf("\r\n");
-
+  printf("test passed!\n");
   return 0;
+
+test_failed:
+  printf("test failed!\n");
+  return 1;
 }
