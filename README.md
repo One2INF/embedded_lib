@@ -33,10 +33,10 @@ bool QUEUE_PopBack(QUEUE queue);
 bool QUEUE_Create(QUEUE queue, void *buff, size_t capacity, size_t element_size);
 bool QUEUE_Destroy(QUEUE queue);
 bool QUEUE_Traverse(QUEUE queue, void(*func)(void*));
-bool QUEUE_Clear(QUEUE queue)
+bool QUEUE_Clear(QUEUE queue);
 ```
 
-> *考虑使用下标索引，代替地址进行 队列头尾 运算，增加可读性。*
+> *考虑使用 `下标索引` 代替 `地址` 进行 `队列头，尾` 运算，增加可读性。*
 
 ## tinycircularqueue
 
@@ -52,5 +52,5 @@ bool QUEUE_Clear(QUEUE queue)
 
 ## 说明
 
-- 为保持精简，各接口未作严格的数据安全防护，需要调用者自己保证。
-- 使用 C99，需要添加编译选项 `-std=c99`.
+- 为保持精简，各接口未作严格的数据安全防护（比如 传参合法性，线程安全），需要调用者自己保证；
+- 使用 C99，需要添加编译选项 `-std=c99`。
