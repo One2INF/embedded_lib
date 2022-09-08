@@ -5,32 +5,32 @@
 #include <string.h>
 
 
-bool QUEUE_Empty(QUEUE queue)
+bool QUEUE_Empty(const QUEUE queue)
 {
   return 0 == queue->size;
 }
 
-bool QUEUE_Full(QUEUE queue)
+bool QUEUE_Full(const QUEUE queue)
 {
   return queue->size == queue->capacity;
 }
 
-size_t QUEUE_Size(QUEUE queue)
+size_t QUEUE_Size(const QUEUE queue)
 {
   return queue->size;
 }
 
-void* QUEUE_Front(QUEUE queue)
+void* QUEUE_Front(const QUEUE queue)
 {
   return queue->head;
 }
 
-void* QUEUE_Back(QUEUE queue)
+void* QUEUE_Back(const QUEUE queue)
 {
   return queue->tail;
 }
 
-void* QUEUE_At(QUEUE queue, size_t pos)
+void* QUEUE_At(const QUEUE queue, size_t pos)
 {
   void *item;
   if(queue->head + pos * queue->element_size > queue->buff + queue->element_size * (queue->capacity - 1))
@@ -41,7 +41,7 @@ void* QUEUE_At(QUEUE queue, size_t pos)
   return item;
 }
 
-bool QUEUE_PushFront(QUEUE queue, void *data)
+bool QUEUE_PushFront(QUEUE queue, const void *data)
 {
   if(QUEUE_Full(queue))
     return false;
@@ -60,7 +60,7 @@ bool QUEUE_PushFront(QUEUE queue, void *data)
   return true;
 }
 
-bool QUEUE_PushBack(QUEUE queue, void *data)
+bool QUEUE_PushBack(QUEUE queue, const void *data)
 {
   if(QUEUE_Full(queue))
     return false;
@@ -124,10 +124,23 @@ bool QUEUE_Create(QUEUE queue, void *buff, size_t capacity, size_t element_size)
 
 bool QUEUE_Destroy(QUEUE queue)
 {
+  queue->head = queue->tail = queue->buff = NULL;
+  queue->size = 0;
+  queue->capacity = 0;
+  queue->element_size = 0;
+
   return true;
 }
 
-bool QUEUE_Traverse(QUEUE queue, void(*func)(void*))
+bool QUEUE_Clear(QUEUE queue)
+{
+  queue->head = queue->tail = queue->buff;
+  queue->size = 0;
+
+  return true;
+}
+
+bool QUEUE_Traverse(const QUEUE queue, void(*func)(void*))
 {
   char *item = queue->head;
   for(size_t size = 0; size < queue->size; ++size)
@@ -138,14 +151,6 @@ bool QUEUE_Traverse(QUEUE queue, void(*func)(void*))
     if(item == queue->buff + queue->element_size * queue->capacity)
       item = queue->buff;
   }
-
-  return true;
-}
-
-bool QUEUE_Clear(QUEUE queue)
-{
-  queue->head = queue->tail = queue->buff;
-  queue->size = 0;
 
   return true;
 }
