@@ -2,7 +2,14 @@
 
 
 #include <stdlib.h>
+#include <stdbool.h>
 
+
+typedef struct 
+{
+  void *next;
+  char data[];
+}NODE;
 
 typedef struct
 {
@@ -11,8 +18,8 @@ typedef struct
   size_t element_size;
 
   size_t size;
-  char *head;
-  char *tail;
+  NODE *head;
+  NODE *tail;
 }LIST_ST;
 
 typedef LIST_ST* LIST;
