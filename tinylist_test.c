@@ -45,6 +45,7 @@ bool PushBackTest(LIST list, int test_data_buff[])
 
     if(*(int*)LIST_Front(list) != test_data_buff[0])
       return true;
+
     LIST_PopBack(list);
   }
 
@@ -74,6 +75,35 @@ bool PushFrontTest(LIST list, int test_data_buff[])
       return true;
 
     LIST_PopFront(list);
+  }
+  
+  return false;
+}
+
+bool InsertTest(LIST list, int test_data_buff[])
+{
+  int idx;
+  LIST_PushFront(list, &test_data_buff[0]);
+  for(idx = 1 ; idx < list->capacity; ++idx)
+  {
+    LIST_Insert(list, list->size - 1, &test_data_buff[idx]);
+  }
+
+  for(idx = 0; idx < list->capacity; ++idx)
+  {
+    if(*(int*)LIST_At(list, idx) != test_data_buff[idx])
+      return true;
+  }
+
+  for(idx = 0; idx < list->capacity; ++idx)
+  {
+    if(*(int*)LIST_Back(list) != test_data_buff[list->capacity - idx - 1])
+      return true;
+
+    if(*(int*)LIST_Front(list) != test_data_buff[0])
+      return true;
+
+    LIST_Erase(list, list->size - 1);
   }
   
   return false;
@@ -120,7 +150,8 @@ int main(int argc, char* argv[])
       fscanf(fp, "%d", &test_data_buff[idx]);
 
     if(PushBackTest(&list, test_data_buff) ||
-       PushFrontTest(&list, test_data_buff))
+       PushFrontTest(&list, test_data_buff) ||
+       InsertTest(&list, test_data_buff))
       goto test_failed;
   }
 

@@ -5,6 +5,9 @@
 #include <string.h>
 
 
+static NODE* first_idle_node(const LIST list);
+static NODE* the_pos_node(const LIST list, size_t pos);
+
 bool LIST_Empty(const LIST list)
 {
   return 0 == list->size;
@@ -46,13 +49,7 @@ bool LIST_PushFront(LIST list, const void *data)
   if(LIST_Full(list))
     return false;
 
-  NODE *node = (NODE*)list->buff;
-  for(size_t i = 0; i < list->capacity; ++i)
-  {
-    if(node->next == NULL)
-      break;
-    node = (NODE*)((char*)node + sizeof(NODE) + list->element_size);
-  }
+  NODE *node = first_idle_node(list);
 
   if(list->size == 0)
   {
@@ -76,13 +73,7 @@ bool LIST_PushBack(LIST list, const void *data)
   if(LIST_Full(list))
     return false;
 
-  NODE *node = (NODE*)list->buff;
-  for(size_t i = 0; i < list->capacity; ++i)
-  {
-    if(node->next == NULL)
-      break;
-    node = (NODE*)((char*)node + sizeof(NODE) + list->element_size);
-  }
+  NODE *node = first_idle_node(list);
 
   if(list->size == 0)
   {
@@ -140,18 +131,17 @@ bool LIST_Insert(LIST list, size_t pos, const void *data)
   if(LIST_Full(list))
     return false;
 
-  NODE *node = (NODE*)list->buff;
-  for(size_t i = 0; i < list->capacity; ++i)
-  {
-    if(node->next == NULL)
-      break;
-    node = (NODE*)((char*)node + sizeof(NODE) + list->element_size);
-  }
+  if(pos == list->size - 1)
+    return LIST_PushBack(list, data);
 
-  NODE *PreNode = LIST_At(list, pos);
+  NODE *node = first_idle_node(list);
+  NODE *PreNode = the_pos_node(list, pos);
   node->next = PreNode->next;
   PreNode->next = node;
   memcpy(node->data, data, list->element_size);
+  ++list->size;
+
+  return true;
 }
 
 bool LIST_Erase(LIST list, size_t pos)
@@ -161,20 +151,22 @@ bool LIST_Erase(LIST list, size_t pos)
 
   if(pos == 0)
   {
-    LIST_PopFront(list);
+    return LIST_PopFront(list);
   }
   else if(pos == list->size - 1)
   {
-    LIST_PopBack(list);
+    return LIST_PopBack(list);
   }
   else
   {
-    NODE *node = LIST_At(list, pos);
-    NODE *PreNode = LIST_At(list, pos - 1);
+    NODE *node = the_pos_node(list, pos);
+    NODE *PreNode = the_pos_node(list, pos - 1);
     PreNode->next = node->next;
     node->next = NULL;
     --list->size;
   }
+
+  return true;
 }
 
 bool LIST_Create(LIST list, void *buff, size_t capacity, size_t element_size)
@@ -222,4 +214,28 @@ bool LIST_Traverse(const LIST list, void(*func)(void*))
   }
 
   return true;
+}
+
+static NODE* first_idle_node(const LIST list)
+{
+  NODE *node = (NODE*)list->buff;
+  for(size_t i = 0; i < list->capacity; ++i)
+  {
+    if(node->next == NULL)
+      break;
+    node = (NODE*)((char*)node + sizeof(NODE) + list->element_size);
+  }
+
+  return node;
+}
+
+static NODE* the_pos_node(const LIST list, size_t pos)
+{
+  NODE *node = list->head;
+  for(size_t i = 0; i < pos; ++i)
+  {
+    node = node->next;
+  }
+
+  return node;
 }
