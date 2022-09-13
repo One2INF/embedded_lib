@@ -135,6 +135,48 @@ bool LIST_PopBack(LIST list)
   return true;   
 }
 
+bool LIST_Insert(LIST list, size_t pos, const void *data)
+{
+  if(LIST_Full(list))
+    return false;
+
+  NODE *node = (NODE*)list->buff;
+  for(size_t i = 0; i < list->capacity; ++i)
+  {
+    if(node->next == NULL)
+      break;
+    node = (NODE*)((char*)node + sizeof(NODE) + list->element_size);
+  }
+
+  NODE *PreNode = LIST_At(list, pos);
+  node->next = PreNode->next;
+  PreNode->next = node;
+  memcpy(node->data, data, list->element_size);
+}
+
+bool LIST_Erase(LIST list, size_t pos)
+{
+  if(LIST_Empty(list))
+    return false;
+
+  if(pos == 0)
+  {
+    LIST_PopFront(list);
+  }
+  else if(pos == list->size - 1)
+  {
+    LIST_PopBack(list);
+  }
+  else
+  {
+    NODE *node = LIST_At(list, pos);
+    NODE *PreNode = LIST_At(list, pos - 1);
+    PreNode->next = node->next;
+    node->next = NULL;
+    --list->size;
+  }
+}
+
 bool LIST_Create(LIST list, void *buff, size_t capacity, size_t element_size)
 {
   if(buff == NULL || capacity == 0 || element_size == 0)
