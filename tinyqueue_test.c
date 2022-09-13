@@ -45,6 +45,7 @@ bool PushBackTest(QUEUE queue, int test_data_buff[])
 
     if(*(int*)QUEUE_Front(queue) != test_data_buff[0])
       return true;
+
     QUEUE_PopBack(queue);
   }
 
@@ -106,19 +107,19 @@ int main(int argc, char* argv[])
   }
 
   int test_number;
+  size_t capacity;
+  size_t element_size = sizeof(int);
+  fscanf(fp, "%d %zd", &test_number, &capacity);
+
   QUEUE_ST queue;
-  fscanf(fp, "%d %zd", &test_number, &queue.capacity);
-  queue.element_size = sizeof(int);
-  int queue_buff[queue.capacity];
-  QUEUE_Create(&queue, queue_buff, queue.capacity, queue.element_size);
+  int queue_buff[capacity];
+  QUEUE_Create(&queue, queue_buff, capacity, element_size);
 
   for(int i = 0; i < test_number; ++i)
   {
     int test_data_buff[queue.capacity];
     for(int idx = 0; idx < queue.capacity; ++idx)
       fscanf(fp, "%d", &test_data_buff[idx]);
-
-    QUEUE_Traverse(&queue, print_node);
 
     if(PushBackTest(&queue, test_data_buff) ||
        PushFrontTest(&queue, test_data_buff))

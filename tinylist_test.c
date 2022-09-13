@@ -136,12 +136,13 @@ int main(int argc, char* argv[])
   }
 
   int test_number;
-  LIST_ST list;
-  fscanf(fp, "%d %zd", &test_number, &list.capacity);
-  list.element_size = sizeof(int);
-  char list_buff[list.capacity * (sizeof(NODE) + sizeof(int))];
+  size_t capacity;
+  size_t element_size = sizeof(int);
+  fscanf(fp, "%d %zd", &test_number, &capacity);
 
-  LIST_Create(&list, list_buff, list.capacity, list.element_size);
+  LIST_ST list;
+  char list_buff[capacity * (sizeof(NODE) + element_size)];
+  LIST_Create(&list, list_buff, capacity, element_size);
 
   for(int i = 0; i < test_number; ++i)
   {
