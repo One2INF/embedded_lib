@@ -44,7 +44,33 @@ bool QUEUE_Clear(QUEUE queue);
 
 ## tinylist
 
+```c
+bool LIST_Empty(const LIST list);
+size_t LIST_Size(const LIST list);
+size_t LIST_Capaticy(LIST list);
 
+void* LIST_Front(const LIST list);
+void* LIST_Back(const LIST list);
+void* LIST_At(const LIST list, size_t pos);
+
+bool LIST_PushFront(LIST list, const void *data);
+bool LIST_PushBack(LIST list, const void *data);
+bool LIST_PopFront(LIST list);
+bool LIST_PopBack(LIST list);
+bool LIST_Insert(LIST list, size_t pos, const void *data);
+bool LIST_Erase(LIST list, size_t pos);
+
+bool LIST_Create(LIST list, void *buff, size_t capacity, size_t element_size);
+bool LIST_Destroy(LIST list);
+bool LIST_Clear(LIST list);
+bool LIST_Traverse(const LIST list, void(*func)(void*));
+```
+
+> *注意：提供 `buff` 时，每个元素需要额外增加 `sizeof(NODE)` 大小。如：*
+>
+> 想要存储 `100` 个 `int` 元素，则需要 `buff` 大小 ```100 * (sizeof(NODE) + sizeof(int))```。
+>
+> 目前只需额外占用一个指针大小，用以指示下一个节点。
 
 ## tinycli
 
