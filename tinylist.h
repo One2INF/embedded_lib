@@ -40,7 +40,7 @@ bool LIST_PopBack(LIST list);
 bool LIST_Insert(LIST list, size_t pos, const void *data);
 bool LIST_Erase(LIST list, size_t pos);
 
-bool LIST_Create(LIST list, void *buff, size_t capacity, size_t element_size);
+bool LIST_Create(LIST list, void *buff, size_t element_size, size_t capacity);
 bool LIST_Destroy(LIST list);
 bool LIST_Clear(LIST list);
 bool LIST_Traverse(const LIST list, void(*func)(void*));

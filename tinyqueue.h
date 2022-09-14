@@ -32,7 +32,7 @@ bool QUEUE_PushBack(QUEUE queue, const void *data);
 bool QUEUE_PopFront(QUEUE queue);
 bool QUEUE_PopBack(QUEUE queue);
 
-bool QUEUE_Create(QUEUE queue, void *buff, size_t capacity, size_t element_size);
+bool QUEUE_Create(QUEUE queue, void *buff, size_t element_size, size_t capacity);
 bool QUEUE_Destroy(QUEUE queue);
 bool QUEUE_Clear(QUEUE queue);
 bool QUEUE_Traverse(const QUEUE queue, void(*func)(void*));

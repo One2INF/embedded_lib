@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 
   QUEUE_ST queue;
   int queue_buff[capacity];
-  QUEUE_Create(&queue, queue_buff, capacity, element_size);
+  QUEUE_Create(&queue, queue_buff, element_size, capacity);
 
   for(int i = 0; i < test_number; ++i)
   {

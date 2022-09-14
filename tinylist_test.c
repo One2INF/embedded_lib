@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 
   LIST_ST list;
   char list_buff[capacity * (sizeof(NODE) + element_size)];
-  LIST_Create(&list, list_buff, capacity, element_size);
+  LIST_Create(&list, list_buff, element_size, capacity);
 
   for(int i = 0; i < test_number; ++i)
   {

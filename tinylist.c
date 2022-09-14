@@ -169,7 +169,7 @@ bool LIST_Erase(LIST list, size_t pos)
   return true;
 }
 
-bool LIST_Create(LIST list, void *buff, size_t capacity, size_t element_size)
+bool LIST_Create(LIST list, void *buff, size_t element_size, size_t capacity)
 {
   if(buff == NULL || capacity == 0 || element_size == 0)
     return false;
