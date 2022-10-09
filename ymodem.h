@@ -1,5 +1,11 @@
 #pragma once
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <stdint.h>
 
 
@@ -31,6 +37,7 @@ typedef struct
 {
   size_t(*read_block)(uint8_t *data, size_t size, uint32_t timeout);
   size_t(*write)(uint8_t *data, size_t size);
+  YMODEM_STATUS_EN(*receive_data_handler)(uint8_t *data, size_t size);
 }YMODE_DRIVER_ST;
 
 typedef struct
@@ -48,6 +55,11 @@ typedef struct
   YMODEM_STATUS_EN(*receive_data_handler)(uint8_t *data, size_t size);
 }YMODEM_HANDLER;
 
+
 void YMODEM_Init(YMODEM_HANDLER *ymodem, YMODE_DRIVER_ST *driver);
 YMODEM_STATUS_EN SendFile(uint8_t *data, size_t size);
 YMODEM_STATUS_EN ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info);
+
+#ifdef __cplusplus
+}
+#endif

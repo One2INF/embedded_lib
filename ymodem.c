@@ -1,3 +1,8 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "ymodem.h"
 
 #include <stdio.h>
@@ -35,6 +40,7 @@ void YMODEM_Init(YMODEM_HANDLER *ymodem, YMODE_DRIVER_ST *driver)
 {
   ymodem->read_block = driver->read_block;
   ymodem->write = driver->write;
+  ymodem->receive_data_handler = driver->receive_data_handler;
 }
 
 YMODEM_STATUS_EN SendFile(uint8_t *data, size_t size)
@@ -64,7 +70,6 @@ static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
     ymodem_c(ymodem);
   }
 
-  printf("%02X %02X\r\n", ymodem->data[0], ymodem->data[1]);
   if(SOH == ymodem->data[PACKET_START_INDEX])
   {
     char *p = (char*)ymodem->data + PACKET_DATA_INDEX;
@@ -87,7 +92,6 @@ static YMODEM_STATUS_EN ymodem_ReceiveData(YMODEM_HANDLER *ymodem)
 
   while(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
   {
-    printf("%02X %02X\r\n", ymodem->data[0], ymodem->data[1]);
     if(SOH == ymodem->data[PACKET_START_INDEX])
     {
       packet_size = PACKET_SIZE_128B;
@@ -129,7 +133,6 @@ static YMODEM_STATUS_EN ymodem_EndReceive(YMODEM_HANDLER *ymodem)
 {
   if(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
   {
-    printf("%02X %02X\r\n", ymodem->data[0], ymodem->data[1]);
     ymodem_ack(ymodem);
     return YMODEM_OK;
   }
@@ -217,3 +220,7 @@ static uint8_t DataPacketCheck(uint8_t *packet, size_t packet_size)
 
   return 1;
 }
+
+#ifdef __cplusplus
+}
+#endif
