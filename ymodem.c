@@ -50,11 +50,27 @@ YMODEM_STATUS_EN SendFile(uint8_t *data, size_t size)
 
 YMODEM_STATUS_EN ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info)
 {
-  ymodem_WaitFileInfo(ymodem, file_info);
-  ymodem_ReceiveData(ymodem);
-  ymodem_EndReceive(ymodem);
+  YMODEM_STATUS_EN Ret;
+  Ret = ymodem_WaitFileInfo(ymodem, file_info);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+  else if(YMODEM_TIMEOUT == Ret)
+    return Ret;
 
-  return YMODEM_OK;
+  Ret = ymodem_ReceiveData(ymodem);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+
+  Ret = ymodem_EndReceive(ymodem);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+
+  return Ret;
+
+error:
+  ymodem_abort(ymodem);
+  return Ret;
+
 }
 
 static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info)
@@ -168,8 +184,9 @@ static void ymodem_nack(YMODEM_HANDLER *ymodem)
 
 static void ymodem_abort(YMODEM_HANDLER *ymodem)
 {
-  ymodem_putc(ymodem, CA);
-  ymodem_putc(ymodem, CA);
+  uint8_t i = 8;
+  while(i--)
+    ymodem_putc(ymodem, CA);
 }
 
 static uint16_t UpdateCRC16(uint16_t crc_in, uint8_t byte)
