@@ -10,12 +10,8 @@ extern "C" {
 
 
 #define PACKET_HEADER_SIZE      (3)
-#define PACKET_DATA_INDEX       (3)
-#define PACKET_START_INDEX      (0)
-#define PACKET_NUMBER_INDEX     (1)
-#define PACKET_CNUMBER_INDEX    (2)
-#define PACKET_TRAILER_SIZE     (3)
-#define PACKET_OVERHEAD_SIZE    (PACKET_HEADER_SIZE + PACKET_TRAILER_SIZE - 1)
+#define PACKET_TRAILER_SIZE     (2)
+#define PACKET_OVERHEAD_SIZE    (PACKET_HEADER_SIZE + PACKET_TRAILER_SIZE)
 
 #define PACKET_SIZE_128B    (128)
 #define PACKET_SIZE_1KB     (1024)
@@ -57,7 +53,7 @@ typedef struct
 
 
 void YMODEM_Init(YMODEM_HANDLER *ymodem, YMODE_DRIVER_ST *driver);
-YMODEM_STATUS_EN SendFile(uint8_t *data, size_t size);
+YMODEM_STATUS_EN SendFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info, uint8_t *data, size_t size);
 YMODEM_STATUS_EN ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info);
 
 #ifdef __cplusplus
