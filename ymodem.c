@@ -246,6 +246,9 @@ static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
     file_info->size = strtoul(p + strlen(p) + 1, NULL, 10);
     printf("filename: %s, file size: %zd\r\n", file_info->name, file_info->size);
 
+    if(ymodem->fileinfo_handler)
+      ymodem->fileinfo_handler(file_info);
+
     ymodem_ack_c(ymodem);
 
     return YMODEM_OK;
@@ -286,7 +289,8 @@ static YMODEM_STATUS_EN ymodem_ReceiveData(YMODEM_HANDLER *ymodem)
 
     if(DataPacketCheck(ymodem->data, packet_size))
     {
-      ymodem->receive_data_handler(ymodem->data, packet_size);
+      if(ymodem->receive_data_handler)
+          ymodem->receive_data_handler(ymodem->data, packet_size);
     }
     else
     {

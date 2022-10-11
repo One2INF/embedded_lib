@@ -47,8 +47,9 @@ typedef struct
   uint8_t data[PACKET_BUFF_SIZE];
 
   size_t(*read_block)(uint8_t *data, size_t size, uint32_t timeout);
-  size_t(*write)(uint8_t *data, size_t size);
-  YMODEM_STATUS_EN(*receive_data_handler)(uint8_t *data, size_t size);
+  size_t(*write)(const uint8_t *data, size_t size);
+  YMODEM_STATUS_EN(*fileinfo_handler)(const FILE_INFO_ST *file_info);
+  YMODEM_STATUS_EN(*receive_data_handler)(const uint8_t *data, size_t size);
 }YMODEM_HANDLER;
 
 
