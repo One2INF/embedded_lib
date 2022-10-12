@@ -7,6 +7,7 @@ extern "C" {
 
 
 #include <stdint.h>
+#include <stdlib.h>
 
 
 #define PACKET_HEADER_SIZE      (3)
@@ -31,31 +32,33 @@ typedef enum
 
 typedef struct
 {
-  size_t(*read_block)(uint8_t *data, size_t size, uint32_t timeout);
-  size_t(*write)(uint8_t *data, size_t size);
-  YMODEM_STATUS_EN(*receive_data_handler)(uint8_t *data, size_t size);
-}YMODE_DRIVER_ST;
-
-typedef struct
-{
   char name[FILE_NAME_LENGTH];
   size_t size;
 }FILE_INFO_ST;
 
 typedef struct
 {
+  size_t(*read_block)(uint8_t *data, size_t size, uint32_t timeout);
+  size_t(*write)(const uint8_t *data, size_t size);
+  YMODEM_STATUS_EN(*fileinfo_handler)(const FILE_INFO_ST *file_info);
+  YMODEM_STATUS_EN(*receive_data_handler)(size_t packet_offset, const uint8_t *data_packet, size_t size);
+}YMODE_DRIVER_ST;
+
+typedef struct
+{
+  char alin_byte;
   uint8_t data[PACKET_BUFF_SIZE];
 
   size_t(*read_block)(uint8_t *data, size_t size, uint32_t timeout);
   size_t(*write)(const uint8_t *data, size_t size);
   YMODEM_STATUS_EN(*fileinfo_handler)(const FILE_INFO_ST *file_info);
-  YMODEM_STATUS_EN(*receive_data_handler)(const uint8_t *data, size_t size);
+  YMODEM_STATUS_EN(*receive_data_handler)(size_t packet_offset, const uint8_t *data_packet, size_t size);
 }YMODEM_HANDLER;
 
 
 void YMODEM_Init(YMODEM_HANDLER *ymodem, YMODE_DRIVER_ST *driver);
-YMODEM_STATUS_EN SendFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info, uint8_t *data, size_t size);
-YMODEM_STATUS_EN ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info);
+YMODEM_STATUS_EN YMODEM_SendFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info, uint8_t *data, size_t size);
+YMODEM_STATUS_EN YMODEM_ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info);
 
 #ifdef __cplusplus
 }
