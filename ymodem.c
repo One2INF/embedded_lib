@@ -38,7 +38,7 @@ extern "C" {
 #define ABORT2                  ((uint8_t)0x61)  /* 'a' == 0x61, abort by user */
 
 #define DOWNLOAD_TIMEOUT        ((uint32_t)1000) /* One second retry delay */
-#define MAX_ERRORS              ((uint32_t)3600)
+#define MAX_ERRORS              ((uint32_t)10)
 
 static YMODEM_STATUS_EN ymodem_WaitReceiverReady(YMODEM_HANDLER *ymodem);
 static YMODEM_STATUS_EN ymodem_SendFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info);
@@ -70,20 +70,45 @@ void YMODEM_Init(YMODEM_HANDLER *ymodem, YMODE_DRIVER_ST *driver)
 
 YMODEM_STATUS_EN YMODEM_SendFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info, uint8_t *data, size_t size)
 {
-  ymodem_WaitReceiverReady(ymodem);
-  ymodem_SendFileInfo(ymodem, file_info);
-  ymodem_SendData(ymodem, data, size);
-  ymodem_EndSend(ymodem);
+  YMODEM_STATUS_EN Ret;
+  Ret = ymodem_WaitReceiverReady(ymodem);
+  if(YMODEM_ERROR == Ret)
+    goto error;
 
-  return YMODEM_OK;
+  Ret = ymodem_SendFileInfo(ymodem, file_info);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+
+  Ret = ymodem_SendData(ymodem, data, size);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+
+  Ret = ymodem_EndSend(ymodem);
+  if(YMODEM_ERROR == Ret)
+    goto error;
+
+error:
+  return Ret;
 }
 
 static YMODEM_STATUS_EN ymodem_WaitReceiverReady(YMODEM_HANDLER *ymodem)
 {
-  while(!ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT));
+  uint32_t ErrorCount = 0;
+  for(;;)
+  {
+    if(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
+    {
+      if('C' == ymodem->data[0])
+      {
+        return YMODEM_OK;
+      }
+    }
 
-  if('C' == ymodem->data[0])
-    return YMODEM_OK;
+    if(++ErrorCount > MAX_ERRORS)
+    {
+      return YMODEM_ERROR;
+    }
+  }
 
   return YMODEM_ERROR;
 }
@@ -103,8 +128,10 @@ static YMODEM_STATUS_EN ymodem_SendFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
   uint16_t crc16 = Cal_CRC16(ymodem->data + PACKET_HEADER_SIZE, PACKET_SIZE_128B);
   ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B] = crc16 >> 8;
   ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B + 1] = crc16 & 0x00FF;
+  printf("send filename: %s, file size: %zd\r\n", file_info->name, file_info->size);
 
-  while(1)
+  uint32_t ErrorCount = 0;
+  for(;;)
   {
     ymodem->write(ymodem->data, PACKET_OVERHEAD_SIZE + PACKET_SIZE_128B);
     uint8_t ch[2];
@@ -112,12 +139,17 @@ static YMODEM_STATUS_EN ymodem_SendFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
     {
       if(ACK == ch[0] && 'C' == ch[1])
       {
-        break;
+        return YMODEM_OK;
+      }
+
+      if(++ErrorCount > MAX_ERRORS)
+      {
+        return YMODEM_ERROR;
       }
     }
   }
 
-  return YMODEM_OK;
+  return YMODEM_ERROR;
 }
 
 static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, size_t size)
@@ -139,8 +171,8 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
       PacketDataSize = BytesRemained;
       BytesRemained = 0;
     }
+
     ++idx;
-    printf("packet_size: %zd, BytesRemained: %zd\r\n", PacketDataSize, BytesRemained);
     ymodem->data[PACKET_NUMBER_INDEX] = idx;
     ymodem->data[PACKET_CNUMBER_INDEX] = ~idx;
     memset(ymodem->data + PACKET_HEADER_SIZE, 0, PACKET_SIZE_128B);
@@ -149,8 +181,10 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
     uint16_t crc16 = Cal_CRC16(ymodem->data + PACKET_HEADER_SIZE, PACKET_SIZE_128B);
     ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B] = crc16 >> 8;
     ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B + 1] = crc16 & 0x00FF;
+    printf("send data packet: %u, %u", ymodem->data[0], ymodem->data[1]);
 
-    while(1)
+    uint32_t ErrorCount = 0;
+    for(;;)
     {
       ymodem->write(ymodem->data, PACKET_OVERHEAD_SIZE + PACKET_SIZE_128B);
 
@@ -162,6 +196,11 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
           break;
         }
       }
+
+      if(++ErrorCount > MAX_ERRORS)
+      {
+        return YMODEM_ERROR;
+      }
     }
   }
   while(BytesRemained);
@@ -171,7 +210,10 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
 
 static YMODEM_STATUS_EN ymodem_EndSend(YMODEM_HANDLER *ymodem)
 {
-  while(1)
+  printf("end send!");
+
+  uint32_t ErrorCount = 0;
+  for(;;)
   {
     ymodem_eot(ymodem);
 
@@ -183,6 +225,11 @@ static YMODEM_STATUS_EN ymodem_EndSend(YMODEM_HANDLER *ymodem)
         break;
       }
     }
+
+    if(++ErrorCount > MAX_ERRORS)
+    {
+      return YMODEM_ERROR;
+    }
   }
 
   ymodem->data[PACKET_NUMBER_INDEX] = 0x00;
@@ -193,7 +240,8 @@ static YMODEM_STATUS_EN ymodem_EndSend(YMODEM_HANDLER *ymodem)
   ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B] = crc16 >> 8;
   ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B + 1] = crc16 & 0x00FF;
 
-  while(1)
+  ErrorCount = 0;
+  for(;;)
   {
     ymodem->write(ymodem->data, PACKET_OVERHEAD_SIZE + PACKET_SIZE_128B);
 
@@ -204,6 +252,11 @@ static YMODEM_STATUS_EN ymodem_EndSend(YMODEM_HANDLER *ymodem)
       {
         break;
       }
+    }
+
+    if(++ErrorCount > MAX_ERRORS)
+    {
+      return YMODEM_ERROR;
     }
   }
 
@@ -232,7 +285,6 @@ YMODEM_STATUS_EN YMODEM_ReceiveFile(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_i
 error:
   ymodem_abort(ymodem);
   return Ret;
-
 }
 
 static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST *file_info)
@@ -242,6 +294,7 @@ static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
   ymodem_c(ymodem);
   while(!ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
   {
+    printf("wait file info...\r\n");
     if(ErrorCount++ > MAX_ERRORS)
       return YMODEM_TIMEOUT;
 
@@ -255,7 +308,7 @@ static YMODEM_STATUS_EN ymodem_WaitFileInfo(YMODEM_HANDLER *ymodem, FILE_INFO_ST
     char *p = (char*)ymodem->data + PACKET_DATA_INDEX;
     strncpy(file_info->name, p, FILE_NAME_LENGTH);
     file_info->size = strtoul(p + strlen(p) + 1, NULL, 10);
-    printf("filename: %s, file size: %zd\r\n", file_info->name, file_info->size);
+    printf("receive filename: %s, file size: %zd\r\n", file_info->name, file_info->size);
 
     if(ymodem->fileinfo_handler)
       ymodem->fileinfo_handler(file_info);
@@ -274,45 +327,55 @@ static YMODEM_STATUS_EN ymodem_ReceiveData(YMODEM_HANDLER *ymodem)
   size_t packet_size;
   size_t packet_offset = 0;
 
-  while(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
+  uint32_t ErrorCount = 0;
+  for(;;)
   {
-    printf("%02X %02X\r\n", ymodem->data[0], ymodem->data[1]);
+    if(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
+    {
+      printf("%02X %02X\r\n", ymodem->data[0], ymodem->data[1]);
 
-    if(SOH == ymodem->data[PACKET_START_INDEX])
-    {
-      packet_size = PACKET_SIZE_128B;
+      if(SOH == ymodem->data[PACKET_START_INDEX])
+      {
+        packet_size = PACKET_SIZE_128B;
+      }
+      else if(STX == ymodem->data[PACKET_START_INDEX])
+      {
+        packet_size = PACKET_SIZE_1KB;
+      }
+      else if(EOT == ymodem->data[PACKET_START_INDEX])
+      {
+        ymodem_ack_c(ymodem);
+        return YMODEM_OK;
+      }
+      else
+      {
+        goto packet_error;
+      }
+
+      if(++packet_idx != ymodem->data[PACKET_NUMBER_INDEX])
+      {
+        goto packet_error;
+      }
+
+      if(DataPacketCheck(ymodem->data, packet_size))
+      {
+        ErrorCount = 0;
+        if(ymodem->receive_data_handler)
+            ymodem->receive_data_handler(packet_offset, ymodem->data + PACKET_DATA_INDEX, packet_size);
+        packet_offset += packet_size;
+      }
+      else
+      {
+        goto packet_error;
+      }
+      ymodem_ack(ymodem);
     }
-    else if(STX == ymodem->data[PACKET_START_INDEX])
-    {
-      packet_size = PACKET_SIZE_1KB;
-    }
-    else if(EOT == ymodem->data[PACKET_START_INDEX])
-    {
-      ymodem_ack_c(ymodem);
-      return YMODEM_OK;
-    }
-    else
+
+packet_error:
+    if(++ErrorCount > MAX_ERRORS)
     {
       return YMODEM_ERROR;
     }
-
-    if(++packet_idx != ymodem->data[PACKET_NUMBER_INDEX])
-    {
-      return YMODEM_ERROR;
-    }
-
-    if(DataPacketCheck(ymodem->data, packet_size))
-    {
-      if(ymodem->receive_data_handler)
-          ymodem->receive_data_handler(packet_offset, ymodem->data + PACKET_DATA_INDEX, packet_size);
-      printf("after receive_data_handler\r\n");
-      packet_offset += packet_size;
-    }
-    else
-    {
-      return YMODEM_ERROR;
-    }
-    ymodem_ack(ymodem);
   }
 
   return YMODEM_ERROR;
@@ -320,10 +383,19 @@ static YMODEM_STATUS_EN ymodem_ReceiveData(YMODEM_HANDLER *ymodem)
 
 static YMODEM_STATUS_EN ymodem_EndReceive(YMODEM_HANDLER *ymodem)
 {
-  if(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
+  uint32_t ErrorCount = 0;
+  for(;;)
   {
-    ymodem_ack(ymodem);
-    return YMODEM_OK;
+    if(ymodem->read_block(ymodem->data, PACKET_BUFF_SIZE, DOWNLOAD_TIMEOUT))
+    {
+      ymodem_ack(ymodem);
+      return YMODEM_OK;
+    }
+
+    if(++ErrorCount > MAX_ERRORS)
+    {
+      return YMODEM_ERROR;
+    }
   }
 
   return YMODEM_ERROR;
