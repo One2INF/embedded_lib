@@ -181,7 +181,7 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
     uint16_t crc16 = Cal_CRC16(ymodem->data + PACKET_HEADER_SIZE, PACKET_SIZE_128B);
     ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B] = crc16 >> 8;
     ymodem->data[PACKET_DATA_INDEX + PACKET_SIZE_128B + 1] = crc16 & 0x00FF;
-    printf("send data packet: %u, %u", ymodem->data[0], ymodem->data[1]);
+    printf("send data packet: %u, %u\r\n", ymodem->data[0], ymodem->data[1]);
 
     uint32_t ErrorCount = 0;
     for(;;)
@@ -210,7 +210,7 @@ static YMODEM_STATUS_EN ymodem_SendData(YMODEM_HANDLER *ymodem, uint8_t *data, s
 
 static YMODEM_STATUS_EN ymodem_EndSend(YMODEM_HANDLER *ymodem)
 {
-  printf("end send!");
+  printf("end send!\r\n");
 
   uint32_t ErrorCount = 0;
   for(;;)
